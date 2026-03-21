@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ultimate Extractor PRO</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #2e489d, #4facfe);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 130px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #2e489d;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #1d2f6f;
+        }
+
+        .stats {
+            margin-top: 10px;
+            background: #f1f5ff;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        .output {
+            margin-top: 10px;
+            height: 180px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+
+        /* 🔥 New Attractive Cards */
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 120px;
+            max-width: 160px;
+            background: #2e489d;
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: 0.25s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+        }
+
+        @media(max-width:600px){
+            .buttons { flex-direction: column; }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>📱 Ultimate Extractor PRO</h2>
+
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+
+    <textarea id="input" placeholder="Paste mixed data here..."></textarea>
+
+    <div class="buttons">
+        <button onclick="extractNumbers()">Extract</button>
+        <button onclick="filter10()">Only 10 Digit</button>
+        <button onclick="sortAsc()">ASC</button>
+        <button onclick="sortDesc()">DESC</button>
+        <button onclick="copyData()">Copy</button>
+        <button onclick="download()">Download</button>
+    </div>
+
+    <div class="stats">
+        <div>Total: <span id="count">0</span></div>
+        <div>Status: <span id="status">Idle</span></div>
+    </div>
+
+    <div class="output" id="output"></div>
+
+    <div class="cards" id="cards"></div>
+
+</div>
+
+<script>
+
+let numbers = [];
+
+function updateStats(action) {
+    document.getElementById("count").innerText = numbers.length;
+    document.getElementById("status").innerText = action;
+    generateCards();
+}
+
+function extractNumbers() {
+    let text = document.getElementById("input").value;
+    text = text.replace(/[^0-9]/g, " ");
+    numbers = text.split(/\s+/).filter(n => n.length > 0);
+    showOutput();
+    updateStats("Extracted");
+}
+
+function filter10() {
+    numbers = numbers.filter(n => n.length === 10);
+    showOutput();
+    updateStats("Filtered 10 Digit");
+}
+
+function sortAsc() {
+    numbers.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    showOutput();
+    updateStats("ASC Sorted");
+}
+
+function sortDesc() {
+    numbers.sort((a,b)=>b.localeCompare(a,undefined,{numeric:true}));
+    showOutput();
+    updateStats("DESC Sorted");
+}
+
+function showOutput() {
+    document.getElementById("output").innerText = numbers.join("\n");
+}
+
+function copyData() {
+    navigator.clipboard.writeText(numbers.join("\n"));
+    updateStats("Copied");
+}
+
+function download() {
+    let blob = new Blob([numbers.join("\n")], {type:"text/plain"});
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "numbers.txt";
+    a.click();
+    updateStats("Downloaded");
+}
+
+function generateCards() {
+    let rates = [0.35,0.30,0.25,0.20,0.15,0.10];
+    let container = document.getElementById("cards");
+    container.innerHTML = "";
+
+    rates.forEach(r => {
+        let amount = (numbers.length * r).toFixed(2);
+
+        let card = `
+        <div class="card">
+            <div>Rate ₹${r}</div>
+            <div style="font-size:18px;margin-top:5px;">₹${amount}</div>
+        </div>
+        `;
+
+        container.innerHTML += card;
+    });
+}
+
+// Excel Upload
+document.getElementById("fileInput").addEventListener("change", function(e){
+    let file = e.target.files[0];
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, {type:'array'});
+        let sheet = workbook.Sheets[workbook.SheetNames[0]];
+        let json = XLSX.utils.sheet_to_json(sheet,{header:1});
+        let text = json.flat().join(" ");
+        document.getElementById("input").value = text;
+        updateStats("Excel Loaded");
+    };
+
+    reader.readAsArrayBuffer(file);
+});
+
+</script>
+
+</body>
+</html>
