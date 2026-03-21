@@ -221,14 +221,21 @@ document.getElementById("fileInput").addEventListener("change", function(e){
     let file = e.target.files[0];
     let reader = new FileReader();
 
-    reader.onload = function(e){
+     reader.onload = function(e){
         let data = new Uint8Array(e.target.result);
         let workbook = XLSX.read(data, {type:'array'});
-        let sheet = workbook.Sheets[workbook.SheetNames[0]];
-        let json = XLSX.utils.sheet_to_json(sheet,{header:1});
-        let text = json.flat().join(" ");
-        document.getElementById("input").value = text;
-        updateStats("Excel Loaded");
+
+        let allText = "";
+
+        workbook.SheetNames.forEach(sheetName => {
+            let sheet = workbook.Sheets[sheetName];
+            let json = XLSX.utils.sheet_to_json(sheet,{header:1});
+            let text = json.flat().join(" ");
+            allText += " " + text;
+        });
+
+        document.getElementById("input").value = allText.trim();
+        updateStats("All Sheets Loaded");
     };
 
     reader.readAsArrayBuffer(file);
