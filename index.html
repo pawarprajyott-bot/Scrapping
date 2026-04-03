@@ -23,9 +23,7 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
 
-        h2 {
-            text-align: center;
-        }
+        h2 { text-align: center; }
 
         textarea {
             width: 100%;
@@ -54,9 +52,7 @@
             font-weight: 600;
         }
 
-        button:hover {
-            background: #1d2f6f;
-        }
+        button:hover { background: #1d2f6f; }
 
         .stats {
             margin-top: 10px;
@@ -78,7 +74,6 @@
             white-space: pre-wrap;
         }
 
-        /* 🔥 New Attractive Cards */
         .cards {
             display: flex;
             flex-wrap: wrap;
@@ -90,7 +85,7 @@
             flex: 1;
             min-width: 120px;
             max-width: 160px;
-            background: #2e489d;
+            background: linear-gradient(135deg, #2e489d, #4facfe);
             color: white;
             padding: 12px;
             border-radius: 10px;
@@ -98,12 +93,6 @@
             font-size: 13px;
             font-weight: 600;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transition: 0.25s;
-        }
-
-        .card:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 8px 18px rgba(0,0,0,0.25);
         }
 
         @media(max-width:600px){
@@ -124,7 +113,8 @@
     <textarea id="input" placeholder="Paste mixed data here..."></textarea>
 
     <div class="buttons">
-        <button onclick="extractNumbers()">Extract</button>
+        <button onclick="extractRaw()">Extract Raw</button>
+        <button onclick="extractSmart()">Smart Extract</button>
         <button onclick="filter10()">Only 10 Digit</button>
         <button onclick="sortAsc()">ASC</button>
         <button onclick="sortDesc()">DESC</button>
@@ -138,7 +128,6 @@
     </div>
 
     <div class="output" id="output"></div>
-
     <div class="cards" id="cards"></div>
 
 </div>
@@ -153,12 +142,33 @@ function updateStats(action) {
     generateCards();
 }
 
-function extractNumbers() {
+// 🔴 RAW (old behavior)
+function extractRaw() {
     let text = document.getElementById("input").value;
     text = text.replace(/[^0-9]/g, " ");
     numbers = text.split(/\s+/).filter(n => n.length > 0);
     showOutput();
-    updateStats("Extracted");
+    updateStats("Raw Extract");
+}
+
+// 🟢 SMART (new powerful logic)
+function extractSmart() {
+    let text = document.getElementById("input").value;
+
+    let matches = text.match(/(\+91[\s-]*)?[6-9]\d{4}[\s-]*\d{5}/g);
+
+    numbers = [];
+
+    if (matches) {
+        matches.forEach(num => {
+            let clean = num.replace(/\D/g, "");
+            clean = clean.slice(-10);
+            numbers.push(clean);
+        });
+    }
+
+    showOutput();
+    updateStats("Smart Extract");
 }
 
 function filter10() {
@@ -205,23 +215,20 @@ function generateCards() {
     rates.forEach(r => {
         let amount = (numbers.length * r).toFixed(2);
 
-        let card = `
+        container.innerHTML += `
         <div class="card">
-            <div>Rate ₹${r}</div>
-            <div style="font-size:18px;margin-top:5px;">₹${amount}</div>
-        </div>
-        `;
-
-        container.innerHTML += card;
+            <div>₹${r}</div>
+            <div style="font-size:18px;">₹${amount}</div>
+        </div>`;
     });
 }
 
-// Excel Upload
+// Excel Upload (ALL sheets)
 document.getElementById("fileInput").addEventListener("change", function(e){
     let file = e.target.files[0];
     let reader = new FileReader();
 
-     reader.onload = function(e){
+    reader.onload = function(e){
         let data = new Uint8Array(e.target.result);
         let workbook = XLSX.read(data, {type:'array'});
 
@@ -230,8 +237,7 @@ document.getElementById("fileInput").addEventListener("change", function(e){
         workbook.SheetNames.forEach(sheetName => {
             let sheet = workbook.Sheets[sheetName];
             let json = XLSX.utils.sheet_to_json(sheet,{header:1});
-            let text = json.flat().join(" ");
-            allText += " " + text;
+            allText += " " + json.flat().join(" ");
         });
 
         document.getElementById("input").value = allText.trim();
